@@ -3,15 +3,15 @@ CFLAGS =
 EXTRA_CFLAGS = -Wall -Wextra
 DESTDIR =
 
-ENABLE_SYSTEMD =
-ENABLE_ELOGIND =
-ENABLE_OPENRC =
+ENABLE_SYSTEMD = 1
+ENABLE_ELOGIND = 
+ENABLE_OPENRC = 
 
-BINDIR =
-SYSCONFDIR =
-RUNSTATEDIR =
-UNITDIR =
-ELOGINDDIR =
+BINDIR = /usr/bin
+SYSCONFDIR = /etc
+RUNSTATEDIR = /run
+UNITDIR = /lib/systemd/system
+ELOGINDDIR = 
 
 TARGETS = intel-undervolt
 ifeq ($(ENABLE_SYSTEMD), 1)
@@ -90,8 +90,36 @@ ifeq ($(ENABLE_ELOGIND), 1)
 endif
 ifeq ($(ENABLE_OPENRC), 1)
 	install -Dm755 'intel-undervolt-loop.openrc' \
-	"$(DESTDIR)$(SYSCONFDIR)/init.d/intel-undervolt-loop"
+	$(DESTDIR)$(SYSCONFDIR)/init.d/intel-undervolt-loop"
 endif
+
+DEB_PACKAGE_NAME = intel-undervolt
+DEB_PACKAGE_VERSION = 1.0
+DEB_PACKAGE_ARCH = amd64
+DEB_PACKAGE_MAINTAINER = Nizam <nizam@europe.com>
+DEB_PACKAGE_DESCRIPTION = Your package description
+
+DEB_PACKAGE_DIR = $(DEB_PACKAGE_NAME)_$(DEB_PACKAGE_VERSION)_$(DEB_PACKAGE_ARCH)
+DEB_PACKAGE_FILES = intel-undervolt
+
+
+deb:
+	mkdir -p $(DEB_PACKAGE_DIR)/DEBIAN
+	echo "Package: $(DEB_PACKAGE_NAME)" > $(DEB_PACKAGE_DIR)/DEBIAN/control
+	echo "Version: $(DEB_PACKAGE_VERSION)" >> $(DEB_PACKAGE_DIR)/DEBIAN/control
+	echo "Architecture: $(DEB_PACKAGE_ARCH)" >> $(DEB_PACKAGE_DIR)/DEBIAN/control
+	echo "Maintainer: $(DEB_PACKAGE_MAINTAINER)" >> $(DEB_PACKAGE_DIR)/DEBIAN/control
+	echo "Description: $(DEB_PACKAGE_DESCRIPTION)" >> $(DEB_PACKAGE_DIR)/DEBIAN/control
+	mkdir -p $(DEB_PACKAGE_DIR)/$(BINDIR)
+	mkdir -p $(DEB_PACKAGE_DIR)/$(SYSCONFDIR)
+	mkdir -p $(DEB_PACKAGE_DIR)/$(UNITDIR)
+	mkdir -p $(DEB_PACKAGE_DIR)/$(ELOGINDDIR)
+	cp $(DEB_PACKAGE_FILES) $(DEB_PACKAGE_DIR)/$(BINDIR)
+	cp intel-undervolt.conf $(DEB_PACKAGE_DIR)/$(SYSCONFDIR)
+	cp intel-undervolt.service $(DEB_PACKAGE_DIR)/$(UNITDIR)
+	cp intel-undervolt-loop.service $(DEB_PACKAGE_DIR)/$(UNITDIR)
+#	cp intel-undervolt-loop.openrc $(DEB_PACKAGE_DIR)/$(SYSCONFDIR)/init.d/intel-undervolt-loop
+	dpkg-deb --build $(DEB_PACKAGE_DIR)
 
 clean:
 	rm -fv \
@@ -99,4 +127,6 @@ clean:
 	intel-undervolt \
 	intel-undervolt.service \
 	intel-undervolt-loop.service \
-	intel-undervolt-loop.openrc
+#	intel-undervolt-loop.openrc \
+	$(DEB_PACKAGE_NAME)_$(DEB_PACKAGE_VERSION)_$(DEB_PACKAGE_ARCH).deb
+
